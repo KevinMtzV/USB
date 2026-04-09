@@ -26,6 +26,16 @@ class MouseClient(val ip: String, val port: Int) {
         Thread { out?.println("CLICK") }.start()
     }
 
+    fun sendScroll(dy: Int) {
+        Thread {
+            try {
+                out?.println("SCROLL,$dy")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }.start()
+    }
+
     fun sendMouseDown() {
         Thread {
             try {

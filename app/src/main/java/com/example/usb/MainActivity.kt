@@ -68,9 +68,8 @@ fun MousePadScreen(mouseClient: MouseClient, isConnected: Boolean) {
                     while (true) {
                         val down = awaitFirstDown()
                         val currentTime = System.currentTimeMillis()
-                        var hasMovedSignificantly = false // bandera
+                        var hasMovedSignificantly = false
 
-                        // Detectar inicio de Doble Toque (Arrastre)
                         if (currentTime - lastTapTime < 300) {
                             isDraggingFile = true
                             mouseClient.sendMouseDown()
@@ -79,30 +78,40 @@ fun MousePadScreen(mouseClient: MouseClient, isConnected: Boolean) {
 
                         while (true) {
                             val event = awaitPointerEvent()
-                            val anyInProgress = event.changes.any { it.pressed }
+                            val changes = event.changes
+                            val anyInProgress = changes.any { it.pressed }
 
                             if (anyInProgress) {
-                                val change = event.changes.first()
-                                val dragAmount = change.position - change.previousPosition
+                                // DETECCIÓN DE DEDOS
+                                if (changes.size >= 2) {
+                                    // GESTO DE 2 DEDOS: SCROLL
+                                    val change = changes[0]
+                                    val scrollAmount = (change.position.y - change.previousPosition.y).toInt()
 
-                                // Si el dedo se mueve más de 2 píxeles, marcamos que YA NO es un click
-                                if (dragAmount.getDistance() > 2f) {
-                                    hasMovedSignificantly = true
+                                    if (scrollAmount != 0) {
+                                        // Invertimos el scrollAmount si prefieres "scroll natural"
+                                        mouseClient.sendScroll(scrollAmount)
+                                    }
+                                    changes.forEach { it.consume() }
+                                } else {
+                                    // GESTO DE 1 DEDO: MOVIMIENTO NORMAL
+                                    val change = changes[0]
+                                    val dragAmount = change.position - change.previousPosition
+
+                                    if (dragAmount.getDistance() > 2f) hasMovedSignificantly = true
+
+                                    val sensitivity = 2.5f
+                                    mouseClient.sendMovement(
+                                        (dragAmount.x * sensitivity).toInt(),
+                                        (dragAmount.y * sensitivity).toInt()
+                                    )
+                                    change.consume()
                                 }
-
-                                val sensitivity = 2.5f
-                                mouseClient.sendMovement(
-                                    (dragAmount.x * sensitivity).toInt(),
-                                    (dragAmount.y * sensitivity).toInt()
-                                )
-                                change.consume()
                             } else {
-                                // el dedo se levanta
                                 if (isDraggingFile) {
                                     mouseClient.sendMouseUp()
                                     isDraggingFile = false
                                 } else if (!hasMovedSignificantly) {
-                                    // solo hacemos click si el dedo no se movio
                                     mouseClient.sendClick()
                                 }
                                 break
