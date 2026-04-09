@@ -85,12 +85,15 @@ fun MousePadScreen(mouseClient: MouseClient, isConnected: Boolean) {
                                 // DETECCIÓN DE DEDOS
                                 if (changes.size >= 2) {
                                     // GESTO DE 2 DEDOS: SCROLL
-                                    val change = changes[0]
-                                    val scrollAmount = (change.position.y - change.previousPosition.y).toInt()
+                                    if (changes.size >= 2) {
+                                        val change = changes[0]
+                                        val scrollAmount = (change.position.y - change.previousPosition.y).toInt()
 
-                                    if (scrollAmount != 0) {
-                                        // Invertimos el scrollAmount si prefieres "scroll natural"
-                                        mouseClient.sendScroll(scrollAmount)
+                                        // Solo enviamos si el movimiento es mayor a 1 para filtrar ruido
+                                        if (Math.abs(scrollAmount) > 1) {
+                                            mouseClient.sendScroll(scrollAmount)
+                                        }
+                                        changes.forEach { it.consume() }
                                     }
                                     changes.forEach { it.consume() }
                                 } else {
