@@ -23,6 +23,16 @@ def iniciar_servidor():
                 
                 # --- LÓGICA DE COMANDOS ---
 
+                if data.startswith("SCROLL,"):
+                    try:
+                        # Formato esperado: "SCROLL,-5"
+                        _, scroll_val = data.split(',')
+                        pyautogui.scroll(int(scroll_val) * 3) 
+                    except ValueError:
+                        pass
+                elif data == "CLICK":
+                    pyautogui.click()
+
                 elif data == "CLICK":
                     pyautogui.click()
                     print("Click")
